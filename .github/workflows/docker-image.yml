@@ -13,13 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGENAME: ${{ vars.DOCKER_REGISTRY }}/lovingnumbers:${{ github.ref_name }}
-      BUILD_NAME: ${{ vars.GITHUB_REF_NAME }}
-      BUILD_HASH: ${{ vars.GITHUB_SHA }}
     steps:
     - uses: actions/checkout@v4
 
     - name: Build the Docker image
-      run: docker build --tag $IMAGENAME --file docker/Dockerfile .
+      run: docker build --tag $IMAGENAME --file Dockerfile .
 
     - name: Log in to the Docker registry
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login "${{ vars.DOCKER_REGISTRY }}" -u "${{ vars.DOCKER_USERNAME }}" --password-stdin
