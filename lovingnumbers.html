@@ -14,50 +14,54 @@
       font-family: sans-serif;
       color: #DDD;
     }
-    #menu {
+    #menu, #result {
         width: 76vw;
-        height: 86vh;
         margin: 5vh 10vw;
         padding: 2vh 2vw;
         background-color: purple;
         border-radius: 40px;
-        font-size: 14pt;
+        font-size: 12pt;
     }
+    #result h1,
+    #result p,
     #menu h1,
     #menu div,
     #menu p {
         text-align: center;
-        margin-bottom: 2em;
+        margin-bottom: 1em;
     }
-    #menu button {
+    #menu button,
+    #result button {
         background-color: #DDD;
         color: #222;
         border: 0px;
-        padding: 1em;
+        padding: 0.5em;
+        margin: 0.5em;
         border-radius: 20px;
         font-size: 150%;
+        width: calc(100% - 1em);
     }
     #score {
         position: absolute;
         top: 0px;
         left: 0px;
         width: 100vw;
-        height: 80px;
+        padding: 9px 0;
         background-color: purple;
-        font-size: 64px;
+        font-size: 54px;
         text-align: center;
     }
     #heart {
         position: absolute;
-        width: 300px;
-        height: 300px;
+        width: 200px;
+        height: 200px;
         background-color: red;
-        clip-path: path('M150 45 C 150 0, 0 0, 0 90 C 0 180, 150 255, 150 300 C 150 255, 300 180, 300 90 C 300 0, 150 0, 150 45 Z');
+        clip-path: path('M100 30 C 100 0, 0 0, 0 60 C 0 120, 100 170, 100 200 C 100 170, 200 120, 200 60 C 200 0, 100 0, 100 30 Z');
         display: flex;
         align-items: center;
         justify-content: center;
         color: #DDD;
-        font-size: 100pt;
+        font-size: 72pt;
         transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
         box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
     }
@@ -86,20 +90,20 @@
   <div id="menu">
     <h1>VERLIEBTE ZAHLEN</h1>
     <p>
-        Du hast eine Minute Zeit verliebte Zahlen zu finden.
+        Wähle Deine Zeit, um verliebte Zahlen zu finden.
         Liegst Du richtig, bekommst Du einen Punkt.
         Aber Achtung: Liegst Du falsch, wird Dir ein Punkt abgezogen.
+        Beim Endlosmodus endet das Spiel bei der ersten falschen Zahl.
     </p>
-    <p>
-        Viel Spaß!
-    </p>
-    <div>
-        <button id="startButton">Spiel starten</button>
+    <div id="startButton">
+        <button data-value="30">30 Sekunden</button>
+        <button data-value="60">1 Minute</button>
+        <button data-value="120">2 Minuten</button>
+        <button data-value="0">Endlosmodus</button>
     </div>
-    <h1 id="result">---</h1>
   </div>
   <div id="game" style="display: none;">
-    <div id="score">0</div>
+    <div id="score"># 0 #</div>
     <div id="heart">5</div>
     <div id="numbers">
         <button data-value="1">1</button>
@@ -113,6 +117,13 @@
         <button data-value="9">9</button>
     </div>
   </div>
+  <div id="result" style="display: none;">
+      <h1>GAME OVER</h1>
+      <p id="klasse">---</p>
+      <h2>Modus: <span id="modus">0</span></h2>
+      <h2>Punkte: <span id="endstand">0</span></h2>
+      <button id="endButton">Zum Menü</button>
+  </div>
   <script>
     const menu = document.getElementById('menu');
     const result = document.getElementById('result');
@@ -123,10 +134,11 @@
 
     let currentNumber = null;
     let score = 0;
+    let duration = 0;
 
     function moveHeart() {
-        const x = Math.random() * (window.innerWidth - 300);
-        const y = Math.max(Math.random() * (window.innerHeight - 720) + 80, 80);
+        const x = Math.random() * (window.innerWidth - 200);
+        const y = Math.max(Math.random() * (window.innerHeight - 530) + 80, 80);
         heart.style.left = `${x}px`;
         heart.style.top = `${y}px`;
     }
@@ -142,9 +154,10 @@
     }
 
     function updateScoreDisplay() {
-        scoreDiv.textContent = score;
+        scoreDiv.textContent = `# ${score} #`;
     }
 
+    /* GameLogic */
     function handleGuess(guess) {
         let timeout = 500;
 
@@ -153,6 +166,7 @@
         }
 
         const guessedNumber = parseInt(guess);
+
         if (isNaN(guessedNumber)) {
             return;
         }
@@ -161,9 +175,13 @@
             score++;
             heart.style.backgroundColor = "gold";
         } else {
-            score--;
-            heart.style.backgroundColor = "black";
-            timeout = 1000;
+            if (duration === 0) {
+                handleEnd();
+            } else {
+                score--;
+                heart.style.backgroundColor = "black";
+                timeout = 1000;
+            }
         }
 
         updateScoreDisplay();
@@ -176,24 +194,78 @@
         }, timeout);
     }
 
-    function handleStart(event) {
+    /* EventHandler */
+    function handleAgain() {
+        menu.style.display = "block";
+        game.style.display = "none";
+        result.style.display = "none";
+    }
+
+    function handleEnd() {
+        menu.style.display = "none";
+        game.style.display = "none";
+        result.style.display = "block";
+
+        let motivation = ""
+        if (duration === 0) {
+            motivation = "Der Wille kennt keine Grenze. Konzentrieren und weiterspielen!";
+        } else {
+            let klasse = score / duration;
+            if (klasse > 0.8) {
+                motivation = "Eine unvorstellbare Punktezahl - Genial!";
+            } else if (klasse > 0.6) {
+                motivation = "Das ist eine beeindruckende Punktezahl - Weiter so!";
+            } else if (klasse > 0.4) {
+                motivation = "Ein gutes Ergebnis - Schaffst Du mehr?";
+            } else if (klasse > 0.2) {
+                motivation = "Gut Gespielt! Du musst nur schneller werden!";
+            } else if (klasse > 0) {
+                motivation = "Du bist auf einem guten Weg.";
+            } else {
+                motivation = "Ich glaube Du hast geraten. Das kannst Du sicherlich besser!";
+            }
+        }
+
+        document.getElementById('klasse').innerHTML = motivation;
+        document.getElementById('modus').innerHTML = {
+            0: "Endlosmodus",
+            30: "30 Sekunden",
+            60: "1 Minute",
+            120: "2 Minuten"
+        }[duration];
+        document.getElementById('endstand').innerHTML = score;
+    }
+
+    function handleStart(sec) {
         score = 0;
+        duration = parseInt(sec);
         menu.style.display = "none";
         game.style.display = "block";
+        result.style.display = "none";
+      
+        updateScoreDisplay();
+        moveHeart();
+        updateHeartNumber();
 
-        setTimeout(() => {
-            menu.style.display = "block";
-            game.style.display = "none";
-            result.innerHTML = score;
-        }, 60000);
+        if (duration > 0) {
+            setTimeout(handleEnd, duration * 1000);
+        }
     }
 
     function handleKeyPress(event) {
         handleGuess(event.key);
     }
 
+    /* Events */
     document.body.addEventListener('keypress', handleKeyPress);
-    startButton.addEventListener('click', handleStart);
+    document.getElementById("endButton").addEventListener('click', handleAgain)
+
+    const starts = document.querySelectorAll('#startButton button');
+    starts.forEach(button => {
+        button.addEventListener('click', function() {
+            handleStart(this.getAttribute('data-value'));
+        });
+    });
 
     const buttons = document.querySelectorAll('#numbers button');
     buttons.forEach(button => {
@@ -201,9 +273,6 @@
             handleGuess(this.getAttribute('data-value'));
         });
     });
-
-    moveHeart();
-    updateHeartNumber();
   </script>
 </body>
 </html>
