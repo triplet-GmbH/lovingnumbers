@@ -2,7 +2,8 @@
 <html>
 <head>
   <title>Verliebte Zahlen finden</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta charset="UTF-8" />
   <style>
     body {
       margin: 0;
@@ -64,7 +65,7 @@
         position: absolute;
         bottom: 0px;
         width: 80vw;
-        height: 280px;
+        height: 240px;
         margin: 10px 10vw;
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
@@ -125,7 +126,7 @@
 
     function moveHeart() {
         const x = Math.random() * (window.innerWidth - 300);
-        const y = Math.random() * (window.innerHeight - 720) + 80;
+        const y = Math.max(Math.random() * (window.innerHeight - 720) + 80, 80);
         heart.style.left = `${x}px`;
         heart.style.top = `${y}px`;
     }
