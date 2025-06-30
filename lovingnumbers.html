@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verliebte Zahlen finden</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      width: 100vw;
+      background-color: #222;
+      overflow: hidden;
+      font-family: sans-serif;
+      color: #DDD;
+    }
+    #menu {
+        width: 76vw;
+        height: 86vh;
+        margin: 5vh 10vw;
+        padding: 2vh 2vw;
+        background-color: purple;
+        border-radius: 40px;
+        font-size: 14pt;
+    }
+    #menu h1,
+    #menu div,
+    #menu p {
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    #menu button {
+        background-color: #DDD;
+        color: #222;
+        border: 0px;
+        padding: 1em;
+        border-radius: 20px;
+        font-size: 150%;
+    }
+    #score {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100vw;
+        height: 80px;
+        background-color: purple;
+        font-size: 64px;
+        text-align: center;
+    }
+    #heart {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background-color: red;
+        clip-path: path('M150 45 C 150 0, 0 0, 0 90 C 0 180, 150 255, 150 300 C 150 255, 300 180, 300 90 C 300 0, 150 0, 150 45 Z');
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #DDD;
+        font-size: 100pt;
+        transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    }
+    #numbers {
+        position: absolute;
+        bottom: 0px;
+        width: 80vw;
+        height: 280px;
+        margin: 10px 10vw;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    #numbers button {
+        background-color: purple;
+        color: #DDD;
+        border: 0px;
+        margin: 2px;
+        border-radius: 20px;
+        font-size: 250%;
+    }
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h1>VERLIEBTE ZAHLEN</h1>
+    <p>
+        Du hast eine Minute Zeit verliebte Zahlen zu finden.
+        Liegst Du richtig, bekommst Du einen Punkt.
+        Aber Achtung: Liegst Du falsch, wird Dir ein Punkt abgezogen.
+    </p>
+    <p>
+        Viel Spaß!
+    </p>
+    <div>
+        <button id="startButton">Spiel starten</button>
+    </div>
+    <h1 id="result">---</h1>
+  </div>
+  <div id="game" style="display: none;">
+    <div id="score">0</div>
+    <div id="heart">5</div>
+    <div id="numbers">
+        <button data-value="1">1</button>
+        <button data-value="2">2</button>
+        <button data-value="3">3</button>
+        <button data-value="4">4</button>
+        <button data-value="5">5</button>
+        <button data-value="6">6</button>
+        <button data-value="7">7</button>
+        <button data-value="8">8</button>
+        <button data-value="9">9</button>
+    </div>
+  </div>
+  <script>
+    const menu = document.getElementById('menu');
+    const result = document.getElementById('result');
+    const startButton = document.getElementById('startButton');
+    const game = document.getElementById('game');
+    const heart = document.getElementById('heart');
+    const scoreDiv = document.getElementById('score');
+
+    let currentNumber = null;
+    let score = 0;
+
+    function moveHeart() {
+        const x = Math.random() * (window.innerWidth - 300);
+        const y = Math.random() * (window.innerHeight - 720) + 80;
+        heart.style.left = `${x}px`;
+        heart.style.top = `${y}px`;
+    }
+
+    function updateHeartNumber() {
+        currentNumber = Math.floor(Math.random() * 9) + 1;
+        heart.textContent = currentNumber;
+    }
+
+    function emptyHeartNumber() {
+        currentNumber = null;
+        heart.textContent = currentNumber;
+    }
+
+    function updateScoreDisplay() {
+        scoreDiv.textContent = score;
+    }
+
+    function handleGuess(guess) {
+        let timeout = 500;
+
+        if (guess === null || currentNumber === null) {
+            return; // cancelled
+        }
+
+        const guessedNumber = parseInt(guess);
+        if (isNaN(guessedNumber)) {
+            return;
+        }
+
+        if (guessedNumber + currentNumber === 10) {
+            score++;
+            heart.style.backgroundColor = "gold";
+        } else {
+            score--;
+            heart.style.backgroundColor = "black";
+            timeout = 1000;
+        }
+
+        updateScoreDisplay();
+        emptyHeartNumber();
+
+        setTimeout(() => {
+            heart.style.backgroundColor = "red";
+            moveHeart();
+            updateHeartNumber();
+        }, timeout);
+    }
+
+    function handleStart(event) {
+        score = 0;
+        menu.style.display = "none";
+        game.style.display = "block";
+
+        setTimeout(() => {
+            menu.style.display = "block";
+            game.style.display = "none";
+            result.innerHTML = score;
+        }, 60000);
+    }
+
+    function handleKeyPress(event) {
+        handleGuess(event.key);
+    }
+
+    document.body.addEventListener('keypress', handleKeyPress);
+    startButton.addEventListener('click', handleStart);
+
+    const buttons = document.querySelectorAll('#numbers button');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            handleGuess(this.getAttribute('data-value'));
+        });
+    });
+
+    moveHeart();
+    updateHeartNumber();
+  </script>
+</body>
+</html>
