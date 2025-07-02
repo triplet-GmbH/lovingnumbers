@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Catculate</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta charset="UTF-8" />
+        <style>
+            body {
+                margin: 0;
+                height: 100vh;
+                width: 100vw;
+                background-color: #222;
+                overflow: hidden;
+                font-family: sans-serif;
+                font-size: 12pt;
+                color: #DDD;
+            }
+            button {
+                width: calc(100% - 1rem);
+                background-color: darkmagenta;
+                color: #DDD;
+                border: 0px;
+                padding: 0.5rem;
+                margin: 0.5rem;
+                border-radius: 0.5rem;
+                font-size: 150%;
+            }
+            div#menu,
+            div#over {
+                padding: 0.5rem;
+                text-align: center;
+            }
+            div#over p {
+                font-size: 150%;
+                margin-bottom: 1rem;
+            }
+            div#over div {
+                font-size: 400%;
+                margin-bottom: 2rem;
+                padding: 1rem;
+                color: gold;
+            }
+            div#menu ul {
+                text-align: left;
+                list-style: none;
+                font-size: 150%;
+                padding-inline-start: 0;
+                padding: 0 1rem;
+            }
+            div#menu ul li label {
+                display: block;
+                margin: 0.5rem;
+            }
+            div#menu ul li:has(input:checked) {
+                background-color: darkmagenta;
+            }
+            div#game {
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+            }
+            div#game_header {
+                flex-grow: 0;
+                background-color: darkmagenta;
+                font-size: 150%;
+                text-align: center;
+                padding: 0.5rem 0;
+            }
+            div#game_display {
+                flex-grow: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            div#game_display div#cat {
+                width: 100%;
+                height: 100%;
+                background-image: url("cat_normal_small.png");
+                background-repeat: no-repeat;
+                background-position: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            div#game_display div#cat div#current_task{
+                color: #222;
+                margin-top: 180px;
+                font-size: 180%;
+            }
+            div#game_controller {
+                flex-grow: 0;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="menu">
+            <h1>CATCULATE</h1>
+            <p>
+                Dir werden kleine Rechenaufgaben gestellt.
+                Gibst du das richtige Ergebnis, gibt es einen Punkt.
+                Beim Falschen Ergebnis wird Dir ein Punkt abgezogen.
+            </p>
+            <ul>
+                <li><label><input type="radio" name="rechenart" value="plus10" checked="checked"> Plus & Minus bis 10</label></li>
+                <li><label><input type="radio" name="rechenart" value="plus20"> Plus & Minus bis 20</label></li>
+                <li><label><input type="radio" name="rechenart" value="plus100"> Plus & Minus bis 100</label></li>
+                <li><label><input type="radio" name="rechenart" value="1mal1"> Kleines 1 mal 1</label></li>
+            </ul>
+            
+            <div id="startGame">
+                <button data-value="30">30 Sekunden</button>
+                <button data-value="60">1 Minute</button>
+                <button data-value="120">2 Minuten</button>
+                <button data-value="0">Endlosmodus</button>
+            </div>
+        </div>
+        <div id="game">
+            <div id="game_header">
+                # <span id="score">---</span> #
+            </div>
+            <div id="game_display">
+                <div id="cat">
+                    <div id="current_task"></div>
+                </div>
+            </div>
+            <div id="game_controller">
+                <button data-value="1">1</button>
+                <button data-value="2">2</button>
+                <button data-value="3">3</button>
+                <button data-value="4">4</button>
+                <button data-value="5">5</button>
+                <button data-value="6">6</button>
+                <button data-value="7">7</button>
+                <button data-value="8">8</button>
+                <button data-value="9">9</button>
+                <div></div>
+                <button data-value="0">0</button>
+                <div></div>
+            </div>
+        </div>
+        <div id="over">
+            <h1>GAME OVER</h1>
+            <p>Das Spiel ist vorbei. Und die Wertung ist hier.</p>
+            <p>Deine Punkte:</p>
+            <div id="endScore">---</div>
+            <button id="startMenu">MENU</button>
+        </div>
+        <script>
+            const menu = document.getElementById("menu");
+            const game = document.getElementById("game");
+            const over = document.getElementById("over");
+            const score = document.getElementById("score");
+            const currentTask = document.getElementById("current_task");
+            const cat = document.getElementById("cat");
+            const gameOver = new CustomEvent("game-over");
+            let rechenart = null;
+            let gamemode = null;
+
+
+            /************************************************************************************
+             * Section Controller
+             ************************************************************************************/
+
+            function loadMenu() {
+                menu.style.display = "block";
+                game.style.display = "none";
+                over.style.display = "none";
+            }
+
+            function loadGame() {
+                menu.style.display = "none";
+                game.style.display = "flex";
+                over.style.display = "none";
+            }
+
+            function loadOver() {
+                menu.style.display = "none";
+                game.style.display = "none";
+                over.style.display = "block";
+            }
+
+            document.querySelectorAll('#startGame button').forEach(button => {
+                button.addEventListener('click', function() {
+                    setScore(0);
+                    gamemode = parseInt(this.getAttribute('data-value'));
+                    rechenart = document.querySelector('input[name="rechenart"]:checked').value;
+                    loadGame();
+                    gameInitialization();
+                });
+            });
+
+            document.querySelectorAll('#game_controller button').forEach(button => {
+                button.addEventListener('click', function() {
+                    gameFrame(parseInt(this.getAttribute('data-value')));
+                });
+            });
+
+            document.body.addEventListener('keypress', function (event) {
+                if (game.style.display !== "none") {
+                    gameFrame(parseInt(event.key));
+                }
+            });
+
+            document.getElementById("startMenu").addEventListener('click', function (event) {
+                loadMenu();
+            });
+
+            document.addEventListener('game-over', function () {
+                document.getElementById('endScore').innerHTML = getScore();
+                loadOver();
+            });
+
+            loadMenu();
+
+            /************************************************************************************
+             * Score Modifier
+             ************************************************************************************/
+
+             function modifyScore(value) {
+                let _score = parseInt(score.innerHTML);
+                score.innerHTML = `${_score + value}`;
+            }
+
+            function setScore(value) {
+                score.innerHTML = `${value}`;
+            }
+
+            function getScore() {
+                return parseInt(score.innerHTML);
+            }
+
+
+            /************************************************************************************
+             * Game Logic
+             ************************************************************************************/
+
+            let nextResult = 0;
+            let uncomleteNumber = "";
+            let currentTaskValue = "";
+
+            function gameInitialization() {
+                gameNextTask();
+
+                if (gamemode !== 0) {
+                    setTimeout(function () {
+                        document.dispatchEvent(gameOver);
+                    }, gamemode * 1000);
+                }
+            }
+
+            function gameNextTask() {
+                uncomleteNumber = "";
+
+                if (rechenart === "1mal1") {
+                    let zahl1 = Math.floor(Math.random() * 10) + 1;
+                    let zahl2 = Math.floor(Math.random() * 10) + 1;
+                    nextResult = zahl1 * zahl2;
+                    currentTaskValue = `${zahl1} * ${zahl2} = `;
+                    drawCurrentTask();
+                    return
+                }
+
+                let maxvalue = 0;
+                if (rechenart === "plus10") {
+                    maxvalue = 10;
+                }
+                if (rechenart === "plus20") {
+                    maxvalue = 20;
+                }
+                if (rechenart === "plus100") {
+                    maxvalue = 100;
+                }
+                
+                if (Math.floor(Math.random() * 2) === 0) {
+                    let zahl1 = Math.floor(Math.random() * (maxvalue - 1)) + 1;
+                    let zahl2 = Math.floor(Math.random() * (maxvalue - zahl1)) + 1;
+                    nextResult = zahl1 + zahl2;
+                    currentTaskValue = `${zahl1} + ${zahl2} = `;
+                } else {
+                    let zahl1 = Math.floor(Math.random() * (maxvalue - 1)) + 2;
+                    let zahl2 = Math.floor(Math.random() * (zahl1 - 1)) + 1;
+                    nextResult = zahl1 - zahl2;
+                    currentTaskValue = `${zahl1} - ${zahl2} = `;
+                }
+                drawCurrentTask();
+            }
+
+            function drawCurrentTask() {
+                currentTask.innerHTML = `${currentTaskValue}${uncomleteNumber || "?"}`;
+            }
+
+            function drawHappyCat() {
+                cat.style.backgroundImage = 'url("cat_happy_small.png")';
+            }
+
+            function drawSadCat() {
+                cat.style.backgroundImage = 'url("cat_sad_small.png")';
+            }
+
+            function drawNormalCat() {
+                cat.style.backgroundImage = 'url("cat_normal_small.png")';
+            }
+
+            function gameFrame(number) {
+                if (!nextResult) {
+                    return
+                }
+
+                uncomleteNumber += number.toString();
+                drawCurrentTask();
+                if (!nextResult.toString().startsWith(uncomleteNumber)) {
+                    nextResult = 0;
+                    drawSadCat();
+                    setTimeout(function () {
+                        if (gamemode === 0) {
+                            document.dispatchEvent(gameOver);
+                            return
+                        }
+                        modifyScore(-1);
+                        gameNextTask();
+                        drawNormalCat()
+                    }, 1000);
+                } else if (nextResult === parseInt(uncomleteNumber)) {
+                    nextResult = 0;
+                    drawHappyCat()
+                    setTimeout(function () {
+                        modifyScore(1);
+                        gameNextTask();
+                        drawNormalCat()
+                    }, 500);
+                }
+            }
+
+        </script>
+    </body>
+</html>
